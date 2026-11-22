@@ -19,7 +19,7 @@ export default {
 
       try {
         const body = await request.json();
-        const message = String(body.message || "").trim();
+        const message = String(body?.message || "").trim();
         if (!message) {
           return new Response(JSON.stringify({ error: "Empty message" }), {
             status: 400,
@@ -29,11 +29,10 @@ export default {
 
         const today = new Date().toISOString().slice(0, 10);
         const prompt = [
-          `Today's date is ${today}. Extract order fields from this client message and return ONLY valid JSON with these exact keys:`,
-          `{"title": string, "service": string, "price": number | "", "currency": string, "deadline": string, "notes": string}`,
+          `Today's date is ${today}. Extract order fields from this client message.`,
           `Rules:`,
           `- title: short order title (max 75 chars).`,
-          `- service: pick the closest match from ["Book Cover Design", "Thumbnail Design", "Logo Design", "Video Editing", "Web Design", "Graphic Design"] or a short service name, or "" if unclear.`,
+          `- service: closest match from ["Book Cover Design", "Thumbnail Design", "Logo Design", "Video Editing", "Web Design", "Graphic Design"] or a short service name, or "" if unclear.`,
           `- price: numeric amount only (e.g. 120), or "" if not mentioned.`,
           `- currency: 3-letter code like "USD", "BDT", "EUR", "GBP", "INR", "CAD", "AUD" (default "USD").`,
           `- deadline: YYYY-MM-DD format if a date/deadline is mentioned, or "" if not.`,
@@ -49,32 +48,55 @@ export default {
             body: JSON.stringify({
               contents: [{ parts: [{ text: prompt }] }],
               generationConfig: {
-                responseMimeType: "application/json"
+                responseMimeType: "application/json",
+                responseSchema: {
+                  type: "OBJECT",
+                  properties: {
+                    title: { type: "STRING" },
+                    service: { type: "STRING" },
+                    price: { type: "STRING" },
+                    currency: { type: "STRING" },
+                    deadline: { type: "STRING" },
+                    notes: { type: "STRING" }
+                  },
+                  required: ["title", "service", "price", "currency", "deadline", "notes"]
+                }
               }
             })
           }
         );
 
+        const geminiRawText = await geminiRes.text();
         if (!geminiRes.ok) {
-          const errText = await geminiRes.text();
-          return new Response(JSON.stringify({ error: "Gemini API error", details: errText }), {
-            status: 502,
-            headers: { "Content-Type": "application/json" }
-          });
+          return new Response(
+            JSON.stringify({
+              error: `Gemini API returned ${geminiRes.status}`,
+              details: geminiRawText.slice(0, 600)
+            }),
+            {
+              status: geminiRes.status >= 400 && geminiRes.status < 600 ? geminiRes.status : 502,
+              headers: { "Content-Type": "application/json" }
+            }
+          );
         }
 
-        const geminiData = await geminiRes.json();
-        const rawJson = geminiData?.candidates?.[0]?.content?.parts?.[0]?.text || "{}";
+        const geminiData = JSON.parse(geminiRawText);
+        let rawJson = geminiData?.candidates?.[0]?.content?.parts?.[0]?.text || "{}";
+        rawJson = rawJson.replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/i, "").trim();
+
         const parsed = JSON.parse(rawJson);
+        const numericPrice = parsed.price === "" || parsed.price === null || parsed.price === undefined
+          ? ""
+          : Number(String(parsed.price).replace(/[^0-9.]/g, ""));
 
         return new Response(
           JSON.stringify({
-            title: String(parsed.title || "New Client Order").slice(0, 75),
-            service: String(parsed.service || ""),
-            price: typeof parsed.price === "number" ? parsed.price : (parsed.price ? Number(parsed.price) : ""),
-            currency: String(parsed.currency || "USD").toUpperCase(),
-            deadline: String(parsed.deadline || ""),
-            notes: String(parsed.notes || message).slice(0, 950)
+            title: String(parsed.title || "New Client Order").trim().slice(0, 75),
+            service: String(parsed.service || "").trim(),
+            price: Number.isFinite(numericPrice) ? numericPrice : "",
+            currency: String(parsed.currency || "USD").trim().toUpperCase().slice(0, 3) || "USD",
+            deadline: String(parsed.deadline || "").trim(),
+            notes: String(parsed.notes || message).trim().slice(0, 950)
           }),
           {
             status: 200,
@@ -82,10 +104,13 @@ export default {
           }
         );
       } catch (err) {
-        return new Response(JSON.stringify({ error: "Failed to parse order" }), {
-          status: 500,
-          headers: { "Content-Type": "application/json" }
-        });
+        return new Response(
+          JSON.stringify({ error: "Failed to parse order", details: String(err?.message || err) }),
+          {
+            status: 500,
+            headers: { "Content-Type": "application/json" }
+          }
+        );
       }
     }
 
