@@ -146,7 +146,151 @@
   $("top-avatar").onclick=()=>go("settings");
   $("today-label").textContent=new Date().toLocaleDateString(undefined,{weekday:"long",month:"long",day:"numeric"}).toUpperCase();
   render();
-})();function parseClientMessageMock(rawText){
+})();
+function parseClientMessageMock(rawText) {
+  const text = String(rawText || "").trim();
+
+  const priceMatch = text.match(/(?:\$|USD|EUR|GBP|BDT|INR|CAD|AUD|৳|€|£|₹)\s*(\d+(?:\.\d{1,2})?)|(\d+(?:\.\d{1,2})?)\s*(?:\$|USD|EUR|GBP|BDT|INR|CAD|AUD|taka)/i);
+  const rawPrice = priceMatch ? Number(priceMatch[1] || priceMatch[2]) : "";
+
+  const currencyEl = document.getElementById("order-currency");
+  let currency = (currencyEl && currencyEl.value) ? currencyEl.value : "USD";
+  if (/\bBDT\b|৳|taka/i.test(text)) currency = "BDT";
+  else if (/\bEUR\b|€/i.test(text)) currency = "EUR";
+  else if (/\bGBP\b|£/i.test(text)) currency = "GBP";
+  else if (/\bINR\b|₹/i.test(text)) currency = "INR";
+  else if (/\bCAD\b/i.test(text)) currency = "CAD";
+  else if (/\bAUD\b/i.test(text)) currency = "AUD";
+  else if (/\bUSD\b|\$/i.test(text)) currency = "USD";
+
+  let service = "";
+  if (/book cover|cover design|front and back cover/i.test(text)) service = "Book Cover Design";
+  else if (/thumbnail/i.test(text)) service = "Thumbnail Design";
+  else if (/logo/i.test(text)) service = "Logo Design";
+  else if (/video|editing|reel|shorts/i.test(text)) service = "Video Editing";
+  else if (/website|landing page|web design/i.test(text)) service = "Web Design";
+
+  let deadline = "";
+  const isoMatch = text.match(/\b(\d{4}-\d{2}-\d{2})\b/);
+  if (isoMatch) {
+    deadline = isoMatch[1];
+  } else {
+    const monthMatch = text.match(/\b(jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|jun(?:e)?|jul(?:y)?|aug(?:ust)?|sep(?:tember)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)\s+(\d{1,2})(?:st|nd|rd|th)?(?:,?\s+(\d{4}))?\b/i);
+    if (monthMatch) {
+      const now = new Date();
+      let year = monthMatch[3] ? Number(monthMatch[3]) : now.getFullYear();
+      const candidate = new Date(`${monthMatch[1]} ${monthMatch[2]}, ${year}`);
+      if (!Number.isNaN(candidate.getTime())) {
+        if (!monthMatch[3] && candidate < new Date(now.getFullYear(), now.getMonth(), now.getDate())) {
+          year += 1;
+        }
+        const y = String(year);
+        const m = String(candidate.getMonth() + 1).padStart(2, "0");
+        const d = String(candidate.getDate()).padStart(2, "0");
+        deadline = `${y}-${m}-${d}`;
+      }
+    }
+  }
+
+  const firstLine = text.split(/\r?\n/)[0].replace(/\s+/g, " ").trim();
+  const shortPart = firstLine.split(/,| budget\b|\bby\b|\bdue\b/i)[0].trim();
+  const title = (shortPart || firstLine || "New Client Order").slice(0, 75);
+
+  return {
+    title,
+    service,
+    price: rawPrice,
+    currency,
+    deadline,
+    notes: text.slice(0, 950)
+  };
+}
+
+async function parseOrderFromBackend(rawText) {
+  const response = await fetch("/api/parse-order", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ message: rawText })
+  });
+
+  if (!response.ok) {
+    throw new Error(`API request failed with status ${response.status}`);
+  }
+
+  const payload = await response.json();
+  const data = payload && typeof payload === "object" && payload.data && typeof payload.data === "object"
+    ? payload.data
+    : payload;
+
+  return {
+    title: typeof data.title === "string" && data.title.trim() ? data.title.trim().slice(0, 75) : "New Client Order",
+    service: typeof data.service === "string" ? data.service.trim() : "",
+    price: data.price === "" || data.price === null || data.price === undefined ? "" : Number(data.price),
+    currency: typeof data.currency === "string" && data.currency.trim() ? data.currency.trim().toUpperCase() : "USD",
+    deadline: typeof data.deadline === "string" ? data.deadline.trim() : "",
+    notes: typeof data.notes === "string" && data.notes.trim() ? data.notes.trim().slice(0, 950) : String(rawText).slice(0, 950)
+  };
+}
+
+function applyParsedOrderToForm(parsed) {
+  const titleEl = document.getElementById("order-title");
+  const serviceEl = document.getElementById("order-service");
+  const priceEl = document.getElementById("order-price");
+  const currencyEl = document.getElementById("order-currency");
+  const deadlineEl = document.getElementById("order-deadline");
+  const notesEl = document.getElementById("order-notes");
+
+  if (titleEl && parsed.title) titleEl.value = parsed.title;
+  if (serviceEl && parsed.service) serviceEl.value = parsed.service;
+  if (priceEl && parsed.price !== "" && Number.isFinite(Number(parsed.price))) {
+    priceEl.value = parsed.price;
+  }
+  if (currencyEl && parsed.currency) currencyEl.value = parsed.currency;
+  if (deadlineEl && parsed.deadline) deadlineEl.value = parsed.deadline;
+  if (notesEl && parsed.notes) notesEl.value = parsed.notes;
+}
+
+document.addEventListener("click", async (e) => {
+  if (e.target.closest("#new-order-main, #new-order-list")) {
+    const box = document.getElementById("ai-message-input");
+    const status = document.getElementById("ai-intake-status");
+    if (box) box.value = "";
+    if (status) status.textContent = "Paste a client message to auto-fill";
+  }
+
+  const parseBtn = e.target.closest("#ai-parse-btn");
+  if (parseBtn) {
+    const box = document.getElementById("ai-message-input");
+    const status = document.getElementById("ai-intake-status");
+    const text = (box && box.value ? box.value : "").trim();
+
+    if (!text) {
+      if (status) status.textContent = "Please paste a message first.";
+      return;
+    }
+
+    const originalLabel = parseBtn.textContent;
+    parseBtn.disabled = true;
+    parseBtn.textContent = "Parsing...";
+    if (status) status.textContent = "Parsing message with AI...";
+
+    try {
+      const parsed = await parseOrderFromBackend(text);
+      applyParsedOrderToForm(parsed);
+      if (status) status.textContent = "Auto-filled with AI — review & save.";
+      if (typeof showToast === "function") showToast("Order fields auto-filled with AI.");
+    } catch (err) {
+      console.warn("AI parse failed, falling back to local parser:", err);
+      const fallback = parseClientMessageMock(text);
+      applyParsedOrderToForm(fallback);
+      if (status) status.textContent = "AI unavailable — filled with basic parser.";
+      if (typeof showToast === "function") showToast("Auto-filled using basic parser.");
+    } finally {
+      parseBtn.disabled = false;
+      parseBtn.textContent = originalLabel;
+    }
+  }
+});
   const text = String(rawText || "").trim();
 
   const priceMatch = text.match(/(?:\$|USD|EUR|GBP|BDT|INR|CAD|AUD|৳|€|£|₹)\s*(\d+(?:\.\d{1,2})?)|(\d+(?:\.\d{1,2})?)\s*(?:\$|USD|EUR|GBP|BDT|INR|CAD|AUD|taka)/i);
