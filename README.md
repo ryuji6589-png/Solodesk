@@ -1,5 +1,6 @@
 # SoloDesk — MVP prototype
 
+
 ## Run locally
 1. Extract this folder.
 2. Open `index.html` in a modern browser.
