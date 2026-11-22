@@ -6,5 +6,12 @@
   "assets": {
     "directory": "./public",
     "binding": "ASSETS"
-  }
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "solodesk-db",
+      "database_id": "cee9c963-2ee2-46b9-bbb8-ef518fb129ae"
+    }
+  ]
 }
