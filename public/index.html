@@ -31,6 +31,17 @@
           <div class="avatar">Y</div>
           <div><strong>Your workspace</strong><small>Personal account</small></div>
         </div>
+		  <div id="cloud-account-box" class="cloud-account-box" style="margin-top: 10px; padding-top: 10px; border-top: 1px solid rgba(148, 163, 184, 0.2);">
+  <div style="display: flex; align-items: center; justify-content: space-between; gap: 6px;">
+    <span id="cloud-sync-status" style="font-size: 0.75rem; opacity: 0.8;">Local only</span>
+    <span id="plan-badge" style="font-size: 0.7rem; padding: 2px 6px; border-radius: 999px; background: rgba(99, 102, 241, 0.15);">FREE</span>
+  </div>
+  <div id="auth-user-label" style="font-size: 0.8rem; margin-top: 4px; word-break: break-all;">Not signed in</div>
+  <div style="display: flex; gap: 6px; margin-top: 8px;">
+    <button id="open-auth-btn" class="btn-secondary" type="button" style="width: 100%; font-size: 0.8rem; padding: 6px 10px;">Sign in / Cloud sync</button>
+    <button id="logout-btn" class="btn-ghost hidden" type="button" style="font-size: 0.8rem; padding: 6px 10px;">Sign out</button>
+  </div>
+</div>
       </div>
     </aside>
 
@@ -149,6 +160,35 @@
     </section>
   </div>
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
+	<div class="modal-backdrop hidden" id="auth-modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="auth-modal-title">
+  <section class="modal modal-small">
+    <div class="modal-heading">
+      <div>
+        <p class="eyebrow">SOLODESK CLOUD</p>
+        <h2 id="auth-modal-title">Sign in to sync</h2>
+      </div>
+      <button class="icon-btn" id="close-auth-modal" type="button" aria-label="Close">✕</button>
+    </div>
+    <p class="muted" id="auth-subtitle">
+      Back up orders, clients, and payments to Cloudflare D1 across devices. Any local orders in this browser will be merged safely.
+    </p>
+    <form class="stack-form" id="auth-form">
+      <label class="field">
+        <span>Email</span>
+        <input id="auth-email" type="email" required autocomplete="email" placeholder="you@example.com" />
+      </label>
+      <label class="field">
+        <span>Password</span>
+        <input id="auth-password" type="password" required minlength="8" autocomplete="current-password" placeholder="At least 8 characters" />
+      </label>
+      <p class="error-text hidden" id="auth-error"></p>
+      <div class="form-actions">
+        <button class="btn btn-ghost" id="toggle-auth-mode" type="button">Create account instead</button>
+        <button class="btn btn-primary" id="submit-auth-btn" type="submit">Sign in</button>
+      </div>
+    </form>
+  </section>
+</div>
   <script src="app.js"></script>
 </body>
 </html>
