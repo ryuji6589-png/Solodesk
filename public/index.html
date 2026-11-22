@@ -1,0 +1,154 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#101b2d">
+  <title>SoloDesk — Freelancer Workspace</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar" id="sidebar">
+      <a class="brand" href="#" aria-label="SoloDesk home">
+        <span class="brand-mark">S</span><span>SoloDesk</span>
+      </a>
+      <div class="workspace-label">WORKSPACE</div>
+      <nav class="nav">
+        <button class="nav-item active" data-view="dashboard"><span class="nav-icon">▦</span>Dashboard</button>
+        <button class="nav-item" data-view="orders"><span class="nav-icon">▤</span>Orders <span class="nav-count" id="nav-order-count">0</span></button>
+        <button class="nav-item" data-view="clients"><span class="nav-icon">♙</span>Clients</button>
+        <button class="nav-item" data-view="earnings"><span class="nav-icon">◷</span>Earnings</button>
+      </nav>
+      <div class="sidebar-bottom">
+        <div class="sidebar-note">
+          <div class="note-icon">✦</div>
+          <strong>Your work, organized.</strong>
+          <p>Keep every project and payment in view.</p>
+        </div>
+        <button class="nav-item" data-view="settings"><span class="nav-icon">⚙</span>Settings</button>
+        <div class="profile">
+          <div class="avatar">Y</div>
+          <div><strong>Your workspace</strong><small>Personal account</small></div>
+        </div>
+      </div>
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <button class="mobile-menu" id="mobile-menu" aria-label="Open menu">☰</button>
+        <div class="breadcrumb">Workspace <span>/</span> <strong id="crumb-current">Dashboard</strong></div>
+        <div class="top-actions">
+          <span class="local-badge"><i></i> Local workspace</span>
+          <button class="avatar small" id="top-avatar" title="Workspace">Y</button>
+        </div>
+      </header>
+
+      <section class="page" id="dashboard-view">
+        <div class="page-heading">
+          <div><p class="eyebrow" id="today-label">YOUR WORKSPACE</p><h1>Welcome to SoloDesk.</h1><p class="subheading">Here’s what’s happening with your freelance work.</p></div>
+          <button class="btn btn-primary" id="new-order-main"><span>＋</span> New order</button>
+        </div>
+        <div class="stats-grid">
+          <article class="stat-card"><div class="stat-top"><span>Active orders</span><span class="stat-icon blue">▤</span></div><strong id="stat-active">0</strong><small>Orders in progress or review</small></article>
+          <article class="stat-card"><div class="stat-top"><span>Due soon</span><span class="stat-icon amber">◷</span></div><strong id="stat-due">0</strong><small>Due within the next 7 days</small></article>
+          <article class="stat-card"><div class="stat-top"><span>Received this month</span><span class="stat-icon green">$</span></div><strong id="stat-received">$0.00</strong><small>Payments received this month</small></article>
+          <article class="stat-card"><div class="stat-top"><span>Outstanding</span><span class="stat-icon violet">◈</span></div><strong id="stat-outstanding">$0.00</strong><small>Remaining across all orders</small></article>
+        </div>
+        <div class="content-grid">
+          <section class="panel orders-panel">
+            <div class="panel-heading"><div><h2>Recent orders</h2><p>Your latest client work</p></div><button class="text-btn" data-go="orders">View all →</button></div>
+            <div id="recent-orders" class="recent-list"></div>
+          </section>
+          <section class="panel attention-panel">
+            <div class="panel-heading"><div><h2>Needs attention</h2><p>Keep an eye on these</p></div><span class="panel-dot"></span></div>
+            <div id="attention-list" class="attention-list"></div>
+          </section>
+        </div>
+        <div class="tip-bar"><span class="tip-spark">✦</span><div><strong>A clearer view of your freelance business.</strong><p>SoloDesk keeps orders, deadlines, revisions and payments together.</p></div></div>
+      </section>
+
+      <section class="page hidden" id="orders-view">
+        <div class="page-heading"><div><p class="eyebrow">YOUR WORK</p><h1>Orders</h1><p class="subheading">Manage every project from request to payment.</p></div><button class="btn btn-primary" id="new-order-list">＋ New order</button></div>
+        <section class="panel">
+          <div class="toolbar"><div class="search-wrap"><span>⌕</span><input id="order-search" type="search" placeholder="Search orders or clients…"></div><select id="status-filter" aria-label="Filter by status"><option value="all">All statuses</option><option value="pending">Pending</option><option value="in_progress">In progress</option><option value="review">Review</option><option value="completed">Completed</option><option value="cancelled">Cancelled</option></select></div>
+          <div class="table-wrap"><table><thead><tr><th>ORDER</th><th>CLIENT</th><th>DEADLINE</th><th>STATUS</th><th>PAYMENT</th><th>PRICE</th><th></th></tr></thead><tbody id="orders-table"></tbody></table></div>
+          <div class="empty-state hidden" id="orders-empty"><div class="empty-icon">▤</div><strong>No orders found</strong><p>Add an order or change your search filters.</p></div>
+        </section>
+      </section>
+
+      <section class="page hidden" id="clients-view">
+        <div class="page-heading"><div><p class="eyebrow">RELATIONSHIPS</p><h1>Clients</h1><p class="subheading">The people behind your projects.</p></div><button class="btn btn-primary" id="new-client">＋ Add client</button></div>
+        <section class="panel"><div class="toolbar"><div class="search-wrap"><span>⌕</span><input id="client-search" type="search" placeholder="Search clients…"></div><span class="muted" id="client-total"></span></div><div id="clients-grid" class="clients-grid"></div><div class="empty-state hidden" id="clients-empty"><div class="empty-icon">♙</div><strong>No clients yet</strong><p>Add a client when creating your first order.</p></div></section>
+      </section>
+
+      <section class="page hidden" id="earnings-view">
+        <div class="page-heading"><div><p class="eyebrow">FINANCIAL OVERVIEW</p><h1>Earnings</h1><p class="subheading">Track what you’ve received and what’s still owed.</p></div></div>
+        <div class="stats-grid earnings-stats">
+          <article class="stat-card"><div class="stat-top"><span>Received this month</span><span class="stat-icon green">$</span></div><strong id="earn-month">$0.00</strong><small>Payments marked as received</small></article>
+          <article class="stat-card"><div class="stat-top"><span>Total received</span><span class="stat-icon blue">↗</span></div><strong id="earn-total">$0.00</strong><small>Across all recorded orders</small></article>
+          <article class="stat-card"><div class="stat-top"><span>Outstanding</span><span class="stat-icon violet">◈</span></div><strong id="earn-due">$0.00</strong><small>Unpaid order balances</small></article>
+        </div>
+        <section class="panel"><div class="panel-heading"><div><h2>Payment overview</h2><p>Balances by order</p></div></div><div class="table-wrap"><table><thead><tr><th>ORDER</th><th>CLIENT</th><th>ORDER TOTAL</th><th>RECEIVED</th><th>REMAINING</th><th>PAYMENT</th></tr></thead><tbody id="earnings-table"></tbody></table></div><div class="empty-state hidden" id="earnings-empty"><strong>No payment records yet</strong><p>Create an order to start tracking payments.</p></div></section>
+      </section>
+
+      <section class="page hidden" id="settings-view">
+        <div class="page-heading"><div><p class="eyebrow">PREFERENCES</p><h1>Settings</h1><p class="subheading">Manage your local workspace and data.</p></div></div>
+        <section class="panel settings-panel">
+          <div class="setting-row"><div><strong>Default currency</strong><p>Used when creating new orders. Existing orders keep their own currency.</p></div><select id="default-currency"><option value="USD">USD — US Dollar</option><option value="EUR">EUR — Euro</option><option value="GBP">GBP — British Pound</option><option value="BDT">BDT — Bangladeshi Taka</option><option value="INR">INR — Indian Rupee</option><option value="CAD">CAD — Canadian Dollar</option><option value="AUD">AUD — Australian Dollar</option></select></div>
+          <div class="setting-row"><div><strong>Export your data</strong><p>Download a JSON backup of your clients and orders.</p></div><button class="btn btn-secondary" id="export-data">Export backup</button></div>
+          <div class="setting-row"><div><strong>Import a backup</strong><p>Restore a previously exported SoloDesk JSON file.</p></div><label class="btn btn-secondary file-label">Import backup<input type="file" id="import-data" accept=".json,application/json" hidden></label></div>
+          <div class="setting-row danger-row"><div><strong>Clear local workspace</strong><p>Delete all SoloDesk data saved in this browser. This cannot be undone.</p></div><button class="btn btn-danger" id="clear-data">Clear data</button></div>
+          <div class="local-warning"><strong>Important:</strong> This MVP stores data in this browser on this device. It does not sync to the cloud. Export backups regularly, and avoid storing sensitive client information.</div>
+        </section>
+      </section>
+      <footer class="footer">SoloDesk <span>•</span> Early access prototype <span>•</span> Your data stays in this browser</footer>
+    </main>
+  </div>
+
+  <div class="modal-backdrop hidden" id="modal-backdrop">
+    <section class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+      <div class="modal-heading"><div><p class="eyebrow">SOLODESK WORKSPACE</p><h2 id="modal-title">New order</h2></div><button class="icon-btn" id="modal-close" aria-label="Close">×</button></div>
+      <form id="order-form">
+        <input type="hidden" id="order-id">
+		<div id="ai-intake-box" style="margin-bottom:14px;padding:12px;border:1px dashed #cbd5e1;border-radius:10px;background:#f8fafc">
+          <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:8px">
+            <strong style="font-size:13px">✦ Smart Order Intake <span style="font-size:11px;font-weight:600;color:#2563eb;background:#dbeafe;padding:2px 7px;border-radius:999px">PRO</span></strong>
+            <small id="ai-intake-status" style="color:#64748b">Paste a client message to auto-fill</small>
+          </div>
+          <textarea id="ai-message-input" rows="2" placeholder="Paste client email, DM, or brief here (e.g. 'Need a book cover by Dec 5 for $150 from Alex')…"></textarea>
+          <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:8px">
+            <button type="button" class="btn btn-secondary" id="ai-parse-btn" style="padding:6px 12px;font-size:13px">Auto-fill order</button>
+          </div>
+        </div>
+        <div class="form-grid">
+          <label class="full">Order title<input id="order-title" required maxlength="80" placeholder="e.g. YouTube thumbnail design"></label>
+          <label>Client<select id="order-client" required></select></label>
+          <label>Service<input id="order-service" maxlength="60" placeholder="e.g. Graphic design"></label>
+          <label>Price<input id="order-price" type="number" min="0" step="0.01" required placeholder="0.00"></label>
+          <label>Currency<select id="order-currency"><option>USD</option><option>EUR</option><option>GBP</option><option>BDT</option><option>INR</option><option>CAD</option><option>AUD</option></select></label>
+          <label>Deadline<input id="order-deadline" type="date"></label>
+          <label>Status<select id="order-status"><option value="pending">Pending</option><option value="in_progress">In progress</option><option value="review">Review</option><option value="completed">Completed</option><option value="cancelled">Cancelled</option></select></label>
+          <label>Revision allowance<input id="order-revision-limit" type="number" min="0" max="99" value="2"></label>
+          <label>Revisions used<input id="order-revisions-used" type="number" min="0" max="99" value="0"></label>
+          <label class="full">Notes<textarea id="order-notes" rows="3" maxlength="1000" placeholder="Brief, requirements or useful details…"></textarea></label>
+        </div>
+        <div class="form-actions"><button type="button" class="btn btn-secondary" id="order-cancel">Cancel</button><button type="submit" class="btn btn-primary">Save order</button></div>
+      </form>
+    </section>
+  </div>
+
+  <div class="modal-backdrop hidden" id="client-modal-backdrop">
+    <section class="modal modal-small" role="dialog" aria-modal="true" aria-labelledby="client-modal-title">
+      <div class="modal-heading"><div><p class="eyebrow">CLIENT DIRECTORY</p><h2 id="client-modal-title">Add client</h2></div><button class="icon-btn" id="client-modal-close" aria-label="Close">×</button></div>
+      <form id="client-form">
+        <input type="hidden" id="client-id">
+        <div class="form-grid"><label class="full">Client name<input id="client-name" required maxlength="80" placeholder="Full name"></label><label class="full">Email (optional)<input id="client-email" type="email" maxlength="120" placeholder="name@example.com"></label><label class="full">Notes<textarea id="client-notes" rows="3" maxlength="500" placeholder="Optional notes"></textarea></label></div>
+        <div class="form-actions"><button type="button" class="btn btn-secondary" id="client-cancel">Cancel</button><button type="submit" class="btn btn-primary">Save client</button></div>
+      </form>
+    </section>
+  </div>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <script src="app.js"></script>
+</body>
+</html>
